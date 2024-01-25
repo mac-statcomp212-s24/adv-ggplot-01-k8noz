@@ -46,19 +46,61 @@ You will need to use reference pages and documentation to discover necessary too
 
 ```{r}
 library(tidyverse)
-# Code for loading packages and reading in data
+library(lubridate)
+weather <- read_csv("https://lmyint.github.io/212_spring_2024/data/sfo_weather.csv")
 ```
-
-
 
 # Visualization
 
-```{r}
-# Code for recreating the visualization
-# Use as many code chunks as you need to organize your work well
+```{r, temp setup}
+months <- tibble(
+  Month = 1:12,
+  month_name = month.abb
+)
+
+month_starts <- weather %>% 
+  filter(Day==1, Month!=1) %>% 
+  left_join(months)
+
+weather_clean <- weather %>% 
+  arrange(Month, Day) %>% 
+  mutate(dateInYear = 1:365)
+
+weather_clean <- weather_clean %>% 
+  left_join(months)
+  
+yes_recordT <- weather %>% 
+  filter(Record==TRUE)
 ```
 
+```{r, temp vis}
+ggplot(weather_clean) +
+  geom_linerange(aes(ymin = RecordLow, ymax = RecordHigh, x = dateInYear), color = "#EDEBE3") +
+  geom_linerange(aes(ymin = NormalLow, ymax = NormalHigh, x = dateInYear), color = "#C8B8BA") +
+  geom_linerange(aes(ymin = Low, ymax = High, x = dateInYear), color = "#A90248") +
+  geom_point(data=yes_recordT, aes(x = dateInYear, y = RecordHigh), shape = 6, size = 2) +
+  scale_y_continuous(breaks= c(0,40,80,120), limits = c(0,120))+
+  geom_text(data=yes_recordT, aes (x = dateInYear, y = RecordHigh, label =RecordText), vjust = -0.5) +
+  scale_x_continuous(breaks = month_starts$dateInYear, labels = month_starts$month_name) +
+  geom_vline(data = month_starts, aes(xintercept = dateInYear), linetype = "dashed", color="#D3D3D3") +
+  theme_classic() +
+  labs(title = "Temperature", x = "Month", y = "Temperature")
+```
 
+```{r, precip setup}
+yes_recordP <- weather_clean %>% 
+  filter(RecordP==TRUE)
+
+```
+
+```{r, precip vis}
+ggplot(weather_clean) +
+  geom_area(aes(x=dateInYear, y=CulmPrec, label=), color="#32a3d8" ,fill="#ebeae2")+
+  geom_point(data=yes_recordP, aes(x = dateInYear, y = CulmPrec), shape = 6, size = 2) +
+  geom_text(data=yes_recordP, aes (x = dateInYear, y = CulmPrec, label =CulmPrec), vjust = -0.5) +
+  theme_classic()
+
+```
 
 
 # AI usage
