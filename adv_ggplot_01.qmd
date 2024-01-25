@@ -91,13 +91,19 @@ ggplot(weather_clean) +
 yes_recordP <- weather_clean %>% 
   filter(RecordP==TRUE)
 
+monthly_precip <- weather_clean %>%
+  group_by(Month) %>%
+  summarise(month_Precip = sum(Precip))
+
+monthly_precip <- monthly_precip %>% 
+  mutate(dateInYear = c(31,59,90,120,151,181,212,243,273,304,333,365))
 ```
 
 ```{r, precip vis}
 ggplot(weather_clean) +
   geom_area(aes(x=dateInYear, y=CulmPrec, label=), color="#32a3d8" ,fill="#ebeae2")+
   geom_point(data=yes_recordP, aes(x = dateInYear, y = CulmPrec), shape = 6, size = 2) +
-  geom_text(data=yes_recordP, aes (x = dateInYear, y = CulmPrec, label =CulmPrec), vjust = -0.5) +
+  geom_text(data=monthly_precip, aes (x=dateInYear, y = month_Precip, label=month_Precip), vjust = -0.5) +
   theme_classic()
 
 ```
