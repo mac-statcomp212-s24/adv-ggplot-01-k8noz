@@ -47,6 +47,7 @@ You will need to use reference pages and documentation to discover necessary too
 ```{r}
 library(tidyverse)
 library(lubridate)
+library(gridExtra)
 weather <- read_csv("https://lmyint.github.io/212_spring_2024/data/sfo_weather.csv")
 ```
 
@@ -74,7 +75,7 @@ yes_recordT <- weather %>%
 ```
 
 ```{r, temp vis}
-ggplot(weather_clean) +
+temp_plot <- ggplot(weather_clean) +
   geom_linerange(aes(ymin = RecordLow, ymax = RecordHigh, x = dateInYear), color = "#EDEBE3") +
   geom_linerange(aes(ymin = NormalLow, ymax = NormalHigh, x = dateInYear), color = "#C8B8BA") +
   geom_linerange(aes(ymin = Low, ymax = High, x = dateInYear), color = "#A90248") +
@@ -84,7 +85,7 @@ ggplot(weather_clean) +
   scale_x_continuous(breaks = month_starts$dateInYear, labels = month_starts$month_name) +
   geom_vline(data = month_starts, aes(xintercept = dateInYear), linetype = "dashed", color="#D3D3D3") +
   theme_classic() +
-  labs(title = "Temperature", x = "Month", y = "Temperature")
+  labs(title = "Temperature", x = NULL, y = NULL)
 ```
 
 ```{r, precip setup}
@@ -100,22 +101,37 @@ monthly_precip <- monthly_precip %>%
 ```
 
 ```{r, precip vis}
-ggplot(weather_clean) +
+precip_plot <- ggplot(weather_clean) +
   geom_area(aes(x=dateInYear, y=CulmPrec, label=), color="#32a3d8" ,fill="#ebeae2")+
   geom_point(data=yes_recordP, aes(x = dateInYear, y = CulmPrec), shape = 6, size = 2) +
-  geom_text(data=monthly_precip, aes (x=dateInYear, y = month_Precip, label=month_Precip), vjust = -0.5) +
-  theme_classic()
+  geom_text(data=monthly_precip, aes (x=dateInYear, y = month_Precip, label=month_Precip), vjust = -0.5, hjust= 1) +
+  scale_x_continuous(breaks = month_starts$dateInYear, labels=NULL) +
+  geom_vline(data = month_starts, aes(xintercept = dateInYear), linetype = "solid", color="#D3D3D3") +
+  theme_classic()+
+  labs(title = "Precipitation", x = NULL, y = NULL)
 
 ```
 
+```{r}
+combined_plot <- grid.arrange(temp_plot, precip_plot, nrow=2, heights=c(2,1),top = "SFO weather in 2011")
+```
 
 # AI usage
 
 If you use an AI tool (e.g., ChatGPT, Google Bard) to help with this assignment, please paste below the prompts you use and their associated output.
 
-**Prompt:**
+**Prompt:** 
 
-**Output:**
+>how to combine separate plots into one panel using ggplot, edit 1: do not use cowplot, edit 2: summarize the answer without using code
+
+**Output:** To combine separate ggplot plots into one panel without using cowplot:
+
+> Install and load the gridExtra package.
+Create individual plots using ggplot.
+Use the grid.arrange() function from gridExtra to arrange the plots.
+Customize the layout and appearance as needed.
+Display the combined plot.
+Note: Adjust the code based on your specific plots and preferences. gridExtra is an alternative package for combining plots in R.
 
 Keep in mind that the use of AI has a [huge energy cost](https://lmyint.github.io/212_spring_2024/syllabus.html#artificial-intelligence-ai-use). Please describe an energy-saving activity that you can start engaging in to offset this cost.
 
