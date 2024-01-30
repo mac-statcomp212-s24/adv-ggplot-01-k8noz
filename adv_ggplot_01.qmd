@@ -54,66 +54,64 @@ weather <- read_csv("https://lmyint.github.io/212_spring_2024/data/sfo_weather.c
 # Visualization
 
 ```{r, temp setup}
-months <- tibble(
-  Month = 1:12,
-  month_name = month.abb
-)
-
-month_starts <- weather %>% 
-  filter(Day==1, Month!=1) %>% 
-  left_join(months)
-
-weather_clean <- weather %>% 
-  arrange(Month, Day) %>% 
-  mutate(dateInYear = 1:365)
-
-weather_clean <- weather_clean %>% 
-  left_join(months)
-  
 yes_recordT <- weather %>% 
   filter(Record==TRUE)
+
+month_starts <- weather %>%
+  group_by(Month) %>% 
+  filter(Day==max(Day))
 ```
 
 ```{r, temp vis}
-temp_plot <- ggplot(weather_clean) +
-  geom_linerange(aes(ymin = RecordLow, ymax = RecordHigh, x = dateInYear), color = "#EDEBE3") +
-  geom_linerange(aes(ymin = NormalLow, ymax = NormalHigh, x = dateInYear), color = "#C8B8BA") +
-  geom_linerange(aes(ymin = Low, ymax = High, x = dateInYear), color = "#A90248") +
-  geom_point(data=yes_recordT, aes(x = dateInYear, y = RecordHigh), shape = 6, size = 2) +
+temp_plot <-ggplot(weather) +
+  geom_vline(data = month_starts, aes(xintercept = date), linetype = "dashed", color="#D3D3D3") +
+  geom_linerange(aes(ymin = RecordLow, ymax = RecordHigh, x = date), color = "#EDEBE3") +
+  geom_linerange(aes(ymin = NormalLow, ymax = NormalHigh, x = date), color = "#C8B8BA") +
+  geom_linerange(aes(ymin = Low, ymax = High, x = date), color = "#A90248", size=1.1) +
+  geom_point(data=yes_recordT, aes(x = date, y = RecordHigh), shape = 25, size = 1.5, fill="black") +
   scale_y_continuous(breaks= c(0,40,80,120), limits = c(0,120))+
-  geom_text(data=yes_recordT, aes (x = dateInYear, y = RecordHigh, label =RecordText), vjust = -0.5) +
-  scale_x_continuous(breaks = month_starts$dateInYear, labels = month_starts$month_name) +
-  geom_vline(data = month_starts, aes(xintercept = dateInYear), linetype = "dashed", color="#D3D3D3") +
+  geom_text(data=yes_recordT, aes (x = date+3, y = RecordHigh+7, label =RecordText), size= 1.5) +
+  scale_x_date(date_labels = "%b",
+               breaks = seq( from = as.Date("2011-01-15"), to = as.Date("2011-12-15"), by = "1 month"), expand=expansion(0))+
   theme_classic() +
-  labs(title = "Temperature", x = NULL, y = NULL)
+  theme(axis.line.x = element_blank(),
+        axis.ticks.x = element_blank())+
+  labs(title = "Temperature", x=NULL, y=NULL)
 ```
 
+
 ```{r, precip setup}
-yes_recordP <- weather_clean %>% 
+yes_recordP <- weather %>% 
   filter(RecordP==TRUE)
 
-monthly_precip <- weather_clean %>%
-  group_by(Month) %>%
-  summarise(month_Precip = sum(Precip))
+final_day<- weather %>% 
+  group_by(Month) %>% 
+  filter(Day==max(Day))
 
-monthly_precip <- monthly_precip %>% 
-  mutate(dateInYear = c(31,59,90,120,151,181,212,243,273,304,333,365))
+monthly_precip <- weather %>%
+  group_by(Month) %>%
+  summarise(month_Precip = sum(Precip)) %>% 
+  left_join(final_day)
+
 ```
 
 ```{r, precip vis}
-precip_plot <- ggplot(weather_clean) +
-  geom_area(aes(x=dateInYear, y=CulmPrec, label=), color="#32a3d8" ,fill="#ebeae2")+
-  geom_point(data=yes_recordP, aes(x = dateInYear, y = CulmPrec), shape = 6, size = 2) +
-  geom_text(data=monthly_precip, aes (x=dateInYear, y = month_Precip, label=month_Precip), vjust = -0.5, hjust= 1) +
-  scale_x_continuous(breaks = month_starts$dateInYear, labels=NULL) +
-  geom_vline(data = month_starts, aes(xintercept = dateInYear), linetype = "solid", color="#D3D3D3") +
+ precip_plot <- ggplot(weather) +
+  geom_vline(data = month_starts, aes(xintercept = date), linetype = "solid", color="#D3D3D3") +
+  geom_area(aes(x=date, y=CulmPrec, label=), color="#32a3d8" ,fill="#ebeae2")+
+  geom_point(data=yes_recordP, aes(x = date, y = CulmPrec), shape = 25, size = 1.5, fill="black") +
+  geom_text(data=monthly_precip, aes(x= date, y = month_Precip+0.5, label= month_Precip), size=1.5) +
+ scale_x_date(breaks = seq(from = as.Date("2011-01-15"), to = as.Date("2011-12-15"), by = "1 month"),labels = NULL, expand=expansion(0))+
+  scale_y_continuous(breaks= c(4,8),limits = c(0,8))+
   theme_classic()+
-  labs(title = "Precipitation", x = NULL, y = NULL)
+  theme(axis.line.x = element_blank(),
+        axis.ticks.x = element_blank())+
+  labs(title = "Precipitation", x=NULL, y=NULL)
 
 ```
 
 ```{r}
-combined_plot <- grid.arrange(temp_plot, precip_plot, nrow=2, heights=c(2,1),top = "SFO weather in 2011")
+combined_plot <- grid.arrange(temp_plot, precip_plot, nrow=2, heights=c(3,2) ,top = "SFO weather in 2011")
 ```
 
 # AI usage
@@ -136,3 +134,5 @@ Note: Adjust the code based on your specific plots and preferences. gridExtra is
 Keep in mind that the use of AI has a [huge energy cost](https://lmyint.github.io/212_spring_2024/syllabus.html#artificial-intelligence-ai-use). Please describe an energy-saving activity that you can start engaging in to offset this cost.
 
 **Energy-saving activity:** 
+
+>I can lower the temperature of my house by a few degrees and adjust for this by dressing warm and using blankets.
